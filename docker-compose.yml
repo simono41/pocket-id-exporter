@@ -1,0 +1,54 @@
+services:
+  pocketid:
+    image: stonith404/pocket-id:latest
+    container_name: pocket-id
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - "./data:/app/backend/data"
+
+    environment:
+      - TRUST_PROXY=true # Set to true if a reverse proxy is in front of the container
+      - VIRTUAL_HOST=pocket-id.brothertec.eu
+      - VIRTUAL_PORT=80
+      - LETSENCRYPT_HOST=pocket-id.brothertec.eu
+      - LETSENCRYPT_EMAIL=admin@brothertec.eu
+
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+    networks:
+      - default
+      - proxy
+      - edge-tier
+
+  pocket-id-exporter:
+    container_name: pocket-id-exporter
+    build:
+      context: go/.
+      args:
+        - GO111MODULE=off
+    volumes:
+      - "./data:/data"
+    #ports:
+    #  - "3000:3000"
+    environment:
+      - TZ=Europe/Berlin
+
+    restart: always
+
+    networks:
+      default:
+      dns:
+        ipv4_address: 172.28.0.93
+
+networks:
+  dns:
+    name: dns
+    external: true
+  proxy:
+    name: nginx-proxy
+    external: true
+  edge-tier:
+    name: edge
+    external: true
