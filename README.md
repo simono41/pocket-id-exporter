@@ -1,97 +1,94 @@
-# pocket-id-exporter
+# Pocket ID Metrics Exporter
 
-Der pocket-id-exporter ist ein Prometheus-Exporter für die Pocket ID-Datenbank. Er stellt Metriken über die Anzahl der Anmeldungen und Benutzer bereit.
+Dieser Pocket ID Metrics Exporter ist ein Go-Programm, das Metriken aus einer Datenbank (SQLite oder PostgreSQL) ausliest und diese für Prometheus bereitstellt.
 
 ## Funktionen
 
-- Exportiert die Gesamtzahl der Anmeldungen als Metrik `pocket_id_login_count`
-- Exportiert die Gesamtzahl der Benutzer als Metrik `pocket_id_user_count`
-- Stellt Metriken im Prometheus-Format unter dem `/metrics`-Endpunkt bereit
+- Unterstützung für SQLite und PostgreSQL Datenbanken
+- Erfassung der Gesamtanzahl der Anmeldungen
+- Erfassung der Gesamtanzahl der Benutzer
+- Bereitstellung der Metriken über einen HTTP-Endpunkt für Prometheus
 
 ## Voraussetzungen
 
-- Docker
-- Docker Compose
+- Go 1.15 oder höher
+- SQLite oder PostgreSQL Datenbank
+- Zugriff auf die Tabellen `Audit_Logs` und `Users` in der Datenbank
 
-## Verwendung mit Docker Compose
+## Installation
 
-1. Erstellen Sie eine `docker-compose.yml`-Datei im Projektverzeichnis mit folgendem Inhalt:
+1. Klonen Sie das Repository:
+   ```
+   git clone https://github.com/yourusername/pocket-id-metrics-exporter.git
+   cd pocket-id-metrics-exporter
+   ```
 
-```yaml
-version: '3'
-services:
-  pocket-id-exporter:
-    build: .
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./data:/app/data
+2. Installieren Sie die erforderlichen Abhängigkeiten:
+   ```
+   go get github.com/prometheus/client_golang/prometheus
+   go get github.com/prometheus/client_golang/prometheus/promhttp
+   go get github.com/lib/pq
+   go get github.com/mattn/go-sqlite3
+   ```
+
+## Konfiguration
+
+Das Programm verwendet Umgebungsvariablen für die Konfiguration:
+
+- `DB_TYPE`: Der Typ der Datenbank ("sqlite3" oder "postgres")
+- `DB_CONNECTION`: Die Verbindungszeichenfolge für die Datenbank
+
+### Beispiele:
+
+Für SQLite:
+```
+export DB_TYPE=sqlite3
+export DB_CONNECTION=./data/pocket-id.db
 ```
 
-2. Erstellen Sie eine `Dockerfile` im Projektverzeichnis:
-
-```Dockerfile
-FROM golang:1.17-alpine
-
-WORKDIR /app
-
-COPY go.mod go.sum ./
-RUN go mod download
-
-COPY . .
-RUN go build -o pocket-id-exporter
-
-EXPOSE 3000
-
-CMD ["./pocket-id-exporter"]
+Für PostgreSQL:
+```
+export DB_TYPE=postgres
+export DB_CONNECTION="host=localhost port=5432 user=yourusername dbname=yourdbname password=yourpassword sslmode=disable"
 ```
 
-3. Stellen Sie sicher, dass Ihre SQLite-Datenbank im Verzeichnis `./data` mit dem Namen `pocket-id.db` liegt.
+## Verwendung
 
-4. Bauen und starten Sie den Container mit Docker Compose:
+1. Setzen Sie die Umgebungsvariablen wie oben beschrieben.
 
-```bash
-docker-compose up --build
-```
+2. Starten Sie das Programm:
+   ```
+   go run main.go
+   ```
 
-Der Exporter ist nun unter `http://localhost:3000/metrics` erreichbar.
+3. Das Programm läuft nun auf `http://localhost:3000`. Die Metriken sind unter dem `/metrics` Endpunkt verfügbar.
 
-## Konfiguration von Prometheus
+## Metriken
 
-Fügen Sie folgende Job-Konfiguration zu Ihrer `prometheus.yml` hinzu, um die Metriken zu scrapen:
+- `pocket_id_login_count`: Gesamtanzahl der Anmeldungen
+- `pocket_id_user_count`: Gesamtanzahl der Benutzer
+
+## Prometheus Konfiguration
+
+Fügen Sie folgende Job-Konfiguration zu Ihrer `prometheus.yml` hinzu:
 
 ```yaml
 scrape_configs:
-  - job_name: 'pocket-id'
+  - job_name: 'pocket_id_metrics'
     static_configs:
       - targets: ['localhost:3000']
 ```
 
-## Entwicklung
+## Fehlerbehebung
 
-Um den Exporter lokal zu entwickeln und zu testen:
+- Stellen Sie sicher, dass die Datenbank erreichbar ist und die erforderlichen Tabellen existieren.
+- Überprüfen Sie die Konsolenausgabe auf Fehlermeldungen.
+- Vergewissern Sie sich, dass die Umgebungsvariablen korrekt gesetzt sind.
 
-1. Installieren Sie Go (Version 1.17 oder höher)
-2. Klonen Sie das Repository
-3. Installieren Sie die Abhängigkeiten:
+## Beitragen
 
-```bash
-go mod download
-```
-
-4. Bauen und starten Sie den Exporter:
-
-```bash
-go build
-./pocket-id-exporter
-```
+Beiträge sind willkommen! Bitte erstellen Sie einen Pull Request oder öffnen Sie ein Issue für Vorschläge und Fehlermeldungen.
 
 ## Lizenz
 
-[MIT License](LICENSE)
-
-https://github.com/stonith404/pocket-id
-
-https://goneuland.de/pocket-id-mit-docker-und-traefik-installieren/
-
-https://github.com/stonith404/pocket-id/issues/56
+Dieses Projekt steht unter der MIT-Lizenz. Siehe die [LICENSE](LICENSE) Datei für Details.

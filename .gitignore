@@ -1,1 +1,4 @@
 data/
+postgres_data/
+dump.sql
+.env
