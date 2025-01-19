@@ -40,8 +40,8 @@ services:
       default:
       dns:
         ipv4_address: 172.28.0.123
-    ports:
-      - "5432:5432"
+    #ports:
+    #  - "5432:5432"
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
 
