@@ -9,10 +9,6 @@ services:
 
     environment:
       - TRUST_PROXY=true # Set to true if a reverse proxy is in front of the container
-      - VIRTUAL_HOST=pocket-id.brothertec.eu
-      - VIRTUAL_PORT=80
-      - LETSENCRYPT_HOST=pocket-id.brothertec.eu
-      - LETSENCRYPT_EMAIL=admin@brothertec.eu
       - DB_PROVIDER=postgres
       - POSTGRES_CONNECTION_STRING=$POSTGRES_CONNECTION_STRING_ENV
 
@@ -20,12 +16,23 @@ services:
       - db
 
     labels:
-      - "com.centurylinklabs.watchtower.enable=true"
+      com.centurylinklabs.watchtower.enable: true
+      caddy: pocket-id.brothertec.eu
+      caddy.@geofilter.maxmind_geolocation.db_path: /GeoIP/GeoLite2-Country.mmdb
+      caddy.@geofilter.maxmind_geolocation.deny_countries: RU CN
+      caddy.reverse_proxy: "@geofilter {{upstreams 80}}"
+      caddy.encode: "zstd gzip"
+      caddy.log: ""
+      caddy.log.output: "file /logs/pocket-id.brothertec.eu.log"
+      caddy.log.output.roll_size: "100MiB"
+      caddy.log.output.roll_keep: "5"
+      caddy.log.output.roll_keep_for: "100d"
+      caddy.log.format: "json"
+      caddy.log.level: "INFO"
 
     networks:
       - default
-      - proxy
-      - edge-tier
+      - caddy
 
   db:
     image: postgres:17
@@ -74,11 +81,6 @@ services:
 
 networks:
   dns:
-    name: dns
     external: true
-  proxy:
-    name: nginx-proxy
-    external: true
-  edge-tier:
-    name: edge
+  caddy:
     external: true
